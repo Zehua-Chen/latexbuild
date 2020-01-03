@@ -1,0 +1,9 @@
+[package]
+name = "latexbuild"
+version = "0.1.0"
+authors = ["Zehua-Chen <peterchen06242000@outlook.com>"]
+edition = "2018"
+
+[lib]
+name="latexbuild"
+path="src/latexbuild/lib.rs"
