@@ -7,7 +7,7 @@ use std::time::SystemTime;
 ///
 /// # Arguments
 /// - `pdf_modified`; the time at which the pdf is modified
-/// - `deps`: the next level of dependencies
+/// - `includes`: the next level of dependencies
 ///
 /// # Returns
 ///
