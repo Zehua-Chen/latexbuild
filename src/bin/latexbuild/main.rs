@@ -1,65 +1,24 @@
-use std::fs::{ read_dir, metadata };
-use std::path::{ PathBuf };
-use std::time::SystemTime;
-
-struct Dependencies<'a> {
-    modified: &'a SystemTime,
-    items: Vec<PathBuf>
-}
-
-impl<'a> Dependencies<'a> {
-    fn new(modified: &'a SystemTime) -> Dependencies<'a> {
-        Dependencies {
-            modified: modified,
-            items: vec!(),
-        }
-    }
-
-    fn needs_build(&self) -> bool {
-        for item in &self.items {
-            if item.is_dir() {
-                let mut deps = Dependencies::new(self.modified);
-                let dir = read_dir(item).unwrap();
-
-                for entry_result in dir {
-                    let entry = entry_result.unwrap();
-                    deps.items.push(entry.path());
-                }
-
-                if deps.needs_build() {
-                    return true;
-                }
-            } else {
-                let modified = item.metadata().unwrap().modified().unwrap();
-
-                if self.modified < &modified {
-                    return true;
-                }
-            }
-        }
-
-        return false ;
-    }
-}
+use std::fs::metadata;
+use std::path::PathBuf;
+use latexbuild::*;
 
 fn main() {
-    let entry = "index.tex";
-    let pdf = "bin/index.pdf";
+    let entry = "test_project/index.tex";
+    let pdf = "test_project/bin/index.pdf";
 
     let pdf_metadata = metadata(pdf);
 
     let build = match pdf_metadata {
         Ok(metadata) => {
             let modified = metadata.modified().unwrap();
+            let items = vec![
+                PathBuf::from("test_project/index.tex"),
+                PathBuf::from("test_project/include.tex"),
+            ];
 
-            let mut deps = Dependencies::new(&modified);
-            deps.items.push(PathBuf::from("include.tex"));
-
-            deps.needs_build()
-        },
-        Err(_) => {
-            true
+            needs_rebuild(&modified, &items).unwrap()
         }
+        Err(_) => true,
     };
 
     if build {
