@@ -1,12 +1,15 @@
 use json::{parse, JsonValue};
+use std::ffi::OsString;
+use std::fmt;
+use std::fmt::{Debug, Formatter};
 use std::fs::read;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::string;
-use std::fmt;
-use std::fmt::{ Debug, Formatter };
 
 pub struct Project {
+    pub latex: OsString,
+    pub bin: PathBuf,
     pub entry: PathBuf,
     pub includes: Vec<PathBuf>,
 }
@@ -38,16 +41,14 @@ impl From<string::FromUtf8Error> for ProjectError {
 
 impl Debug for ProjectError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-
         match self {
             ProjectError::FormatError => {
                 f.write_str("format error")?;
-            },
+            }
             _ => {
                 f.write_str("other error")?;
             }
         }
-
 
         return Ok(());
     }
@@ -56,6 +57,8 @@ impl Debug for ProjectError {
 impl Project {
     pub fn new() -> Project {
         Project {
+            latex: OsString::from("pdflatex"),
+            bin: PathBuf::from("bin"),
             entry: PathBuf::from("index.tex"),
             includes: Vec::new(),
         }
@@ -82,12 +85,44 @@ impl Project {
 
         return match parsed {
             JsonValue::Object(object) => {
+                // latex
+                match object.get("latex") {
+                    Some(latex) => match latex {
+                        JsonValue::Short(latex_short) => {
+                            project.latex = OsString::from(latex_short.as_str());
+                        }
+                        JsonValue::String(latex_str) => {
+                            project.latex = OsString::from(latex_str);
+                        }
+                        _ => {
+                            return Err(ProjectError::FormatError);
+                        }
+                    },
+                    _ => {}
+                }
+
+                // bin
+                match object.get("bin") {
+                    Some(bin) => match bin {
+                        JsonValue::Short(bin_short) => {
+                            project.bin = PathBuf::from(bin_short.as_str());
+                        }
+                        JsonValue::String(bin_str) => {
+                            project.bin = PathBuf::from(bin_str);
+                        }
+                        _ => {
+                            return Err(ProjectError::FormatError);
+                        }
+                    },
+                    _ => {}
+                }
+
                 // entry
                 match object.get("entry") {
                     Some(entry) => match entry {
                         JsonValue::Short(entry_short) => {
                             project.entry = PathBuf::from(entry_short.as_str());
-                        },
+                        }
                         JsonValue::String(entry_str) => {
                             project.entry = PathBuf::from(entry_str);
                         }
@@ -105,8 +140,10 @@ impl Project {
                             for include in includes_array {
                                 match include {
                                     JsonValue::Short(include_short) => {
-                                        project.includes.push(PathBuf::from(include_short.as_str()));
-                                    },
+                                        project
+                                            .includes
+                                            .push(PathBuf::from(include_short.as_str()));
+                                    }
                                     JsonValue::String(include_str) => {
                                         project.includes.push(PathBuf::from(include_str));
                                     }
