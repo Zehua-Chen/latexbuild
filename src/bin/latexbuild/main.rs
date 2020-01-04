@@ -17,7 +17,8 @@ fn main() {
     let mut root_path = config_path.clone();
     root_path.pop();
 
-    let project = Project::load(config_path).unwrap();
+    let mut project = Project::load(config_path).unwrap();
+    project.use_root_path(&root_path);
 
     let entry = "test_project/index.tex";
     let pdf = "test_project/bin/index.pdf";
@@ -28,16 +29,11 @@ fn main() {
         Ok(metadata) => {
             let modified = metadata.modified().unwrap();
             let mut deps: Vec<PathBuf> = Vec::new();
-            let mut entry_path = root_path.clone();
-            entry_path.push(&project.entry);
 
-            deps.push(entry_path);
+            deps.push(project.entry.clone());
 
-            for include in project.includes {
-                let mut include_path = root_path.clone();
-                include_path.push(include);
-
-                deps.push(include_path);
+            for include in &project.includes {
+                deps.push(include.clone());
             }
 
             needs_rebuild(&modified, &deps).unwrap()

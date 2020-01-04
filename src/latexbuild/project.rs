@@ -165,4 +165,30 @@ impl Project {
             _ => Err(ProjectError::FormatError),
         };
     }
+
+    pub fn use_root_path(&mut self, root_path: &Path) {
+        // bin
+        let mut bin = PathBuf::from(root_path);
+        bin.push(&self.bin);
+
+        self.bin = bin;
+
+        // entry
+        let mut entry = PathBuf::from(root_path);
+        entry.push(&self.entry);
+
+        self.entry = entry;
+
+        // includes
+        let mut includes: Vec<PathBuf> = Vec::new();
+
+        for include in &self.includes {
+            let mut new_include = PathBuf::from(root_path);
+            new_include.push(include);
+
+            includes.push(new_include);
+        }
+
+        self.includes = includes;
+    }
 }
