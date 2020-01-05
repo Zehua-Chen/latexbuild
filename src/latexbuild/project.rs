@@ -7,9 +7,22 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::string;
 
+/// A project loaded from disk
+///
+/// # Fields
+///
+/// - `pdf`: note that the pdf field is not in the project specification,
+///   instead, it is inferred from the project specification
+///
+/// # Discussion
+///
+/// A this stage of the project, none of the fields of the structure should be
+/// edited by the consumer. In the future, the fields would be replaced by
+/// getters and setters
 pub struct Project {
     pub latex: OsString,
     pub bin: PathBuf,
+    pub pdf: PathBuf,
     pub entry: PathBuf,
     pub includes: Vec<PathBuf>,
 }
@@ -54,11 +67,19 @@ impl Debug for ProjectError {
     }
 }
 
+fn with_prepend(path: &PathBuf, prepend: &Path) -> PathBuf {
+    let mut output = PathBuf::from(prepend);
+    output.push(path);
+
+    return output;
+}
+
 impl Project {
     pub fn new() -> Project {
         Project {
             latex: OsString::from("pdflatex"),
             bin: PathBuf::from("bin"),
+            pdf: PathBuf::from("index.pdf"),
             entry: PathBuf::from("index.tex"),
             includes: Vec::new(),
         }
@@ -133,6 +154,9 @@ impl Project {
                     _ => {}
                 }
 
+                // After getting entry, resolve pdf
+                project.pdf = project.entry.with_extension("pdf");
+
                 // includes
                 match object.get("includes") {
                     Some(includes) => match includes {
@@ -168,27 +192,21 @@ impl Project {
 
     pub fn use_root_path(&mut self, root_path: &Path) {
         // bin
-        let mut bin = PathBuf::from(root_path);
-        bin.push(&self.bin);
-
-        self.bin = bin;
+        self.bin = with_prepend(&self.bin, root_path);
 
         // entry
-        let mut entry = PathBuf::from(root_path);
-        entry.push(&self.entry);
-
-        self.entry = entry;
+        self.entry = with_prepend(&self.entry, root_path);
 
         // includes
         let mut includes: Vec<PathBuf> = Vec::new();
 
         for include in &self.includes {
-            let mut new_include = PathBuf::from(root_path);
-            new_include.push(include);
-
-            includes.push(new_include);
+            includes.push(with_prepend(include, root_path));
         }
 
         self.includes = includes;
+
+        // pdf
+        self.pdf = with_prepend(&self.pdf, root_path);
     }
 }

@@ -20,10 +20,9 @@ fn main() {
     let mut project = Project::load(config_path).unwrap();
     project.use_root_path(&root_path);
 
-    let entry = "test_project/index.tex";
-    let pdf = "test_project/bin/index.pdf";
+    let pdf_metadata = metadata(&project.pdf);
 
-    let pdf_metadata = metadata(pdf);
+    println!("pdf = {}", &project.pdf.to_str().unwrap());
 
     let build = match pdf_metadata {
         Ok(metadata) => {
@@ -42,6 +41,6 @@ fn main() {
     };
 
     if build {
-        println!("perform build on {}", entry);
+        project.build().unwrap();
     }
 }
