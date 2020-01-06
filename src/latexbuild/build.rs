@@ -1,5 +1,4 @@
 use super::{Logger, Project};
-use std::fmt::Formatter;
 use std::fs::create_dir;
 use std::io;
 use std::process::Command;

@@ -5,21 +5,21 @@ pub trait Logger {
     fn output(&mut self, output: &str);
 }
 
-pub struct StdIOLogger {}
+pub struct StdErrLogger {}
 
-impl StdIOLogger {
-    pub fn new() -> StdIOLogger {
-        StdIOLogger {}
+impl StdErrLogger {
+    pub fn new() -> StdErrLogger {
+        StdErrLogger {}
     }
 }
 
-impl Logger for StdIOLogger {
+impl Logger for StdErrLogger {
     fn create_dir(&mut self, dir: &str) {
-        println!("creating directory {}", dir);
+        eprintln!("creating directory {}", dir);
     }
 
     fn run_latex(&mut self, latex: &str, bin: &str, entry: &str) {
-        println!("running latex {}, bin = {}, entry = {}", latex, bin, entry);
+        eprintln!("running latex {}, bin = {}, entry = {}", latex, bin, entry);
     }
 
     fn error(&mut self, error: &str) {
