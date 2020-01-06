@@ -1,3 +1,6 @@
+mod io;
+pub use io::*;
+
 mod rebuild;
 pub use rebuild::*;
 

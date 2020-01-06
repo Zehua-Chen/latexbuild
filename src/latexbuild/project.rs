@@ -27,35 +27,35 @@ pub struct Project {
     pub includes: Vec<PathBuf>,
 }
 
-pub enum ProjectError {
+pub enum ProjectLoadError {
     FormatError,
     ParserError(json::Error),
     IOError(io::Error),
     FromUtf8Error(string::FromUtf8Error),
 }
 
-impl From<json::Error> for ProjectError {
-    fn from(error: json::Error) -> ProjectError {
-        ProjectError::ParserError(error)
+impl From<json::Error> for ProjectLoadError {
+    fn from(error: json::Error) -> ProjectLoadError {
+        ProjectLoadError::ParserError(error)
     }
 }
 
-impl From<io::Error> for ProjectError {
-    fn from(error: io::Error) -> ProjectError {
-        ProjectError::IOError(error)
+impl From<io::Error> for ProjectLoadError {
+    fn from(error: io::Error) -> ProjectLoadError {
+        ProjectLoadError::IOError(error)
     }
 }
 
-impl From<string::FromUtf8Error> for ProjectError {
-    fn from(error: string::FromUtf8Error) -> ProjectError {
-        ProjectError::FromUtf8Error(error)
+impl From<string::FromUtf8Error> for ProjectLoadError {
+    fn from(error: string::FromUtf8Error) -> ProjectLoadError {
+        ProjectLoadError::FromUtf8Error(error)
     }
 }
 
-impl Debug for ProjectError {
+impl Debug for ProjectLoadError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         match self {
-            ProjectError::FormatError => {
+            ProjectLoadError::FormatError => {
                 f.write_str("format error")?;
             }
             _ => {
@@ -85,7 +85,7 @@ impl Project {
         }
     }
 
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Project, ProjectError> {
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Project, ProjectLoadError> {
         let mut project = Project::new();
         let file_content: String;
 
@@ -116,7 +116,7 @@ impl Project {
                             project.latex = OsString::from(latex_str);
                         }
                         _ => {
-                            return Err(ProjectError::FormatError);
+                            return Err(ProjectLoadError::FormatError);
                         }
                     },
                     _ => {}
@@ -132,7 +132,7 @@ impl Project {
                             project.bin = PathBuf::from(bin_str);
                         }
                         _ => {
-                            return Err(ProjectError::FormatError);
+                            return Err(ProjectLoadError::FormatError);
                         }
                     },
                     _ => {}
@@ -148,7 +148,7 @@ impl Project {
                             project.entry = PathBuf::from(entry_str);
                         }
                         _ => {
-                            return Err(ProjectError::FormatError);
+                            return Err(ProjectLoadError::FormatError);
                         }
                     },
                     _ => {}
@@ -172,13 +172,13 @@ impl Project {
                                         project.includes.push(PathBuf::from(include_str));
                                     }
                                     _ => {
-                                        return Err(ProjectError::FormatError);
+                                        return Err(ProjectLoadError::FormatError);
                                     }
                                 }
                             }
                         }
                         _ => {
-                            return Err(ProjectError::FormatError);
+                            return Err(ProjectLoadError::FormatError);
                         }
                     },
                     _ => {}
@@ -186,7 +186,7 @@ impl Project {
 
                 Ok(project)
             }
-            _ => Err(ProjectError::FormatError),
+            _ => Err(ProjectLoadError::FormatError),
         };
     }
 

@@ -9,7 +9,7 @@ fn main() {
         .args(&[Arg::with_name("config")
             .short("c")
             .long("config")
-            .default_value("./test_project/latexproject.json")])
+            .default_value("./latexproject.json")])
         .get_matches();
 
     let config_path = PathBuf::from(matches.value_of("config").unwrap());
@@ -20,9 +20,17 @@ fn main() {
     let mut project = Project::load(config_path).unwrap();
     project.use_root_path(&root_path);
 
-    let pdf_metadata = metadata(&project.pdf);
+    match project.can_build() {
+        Err(error) => match error {
+            ProjectBuildError::NoEntry => {
+                println!("no entry file");
+                return;
+            }
+        },
+        _ => {}
+    }
 
-    println!("pdf = {}", &project.pdf.to_str().unwrap());
+    let pdf_metadata = metadata(&project.pdf);
 
     let build = match pdf_metadata {
         Ok(metadata) => {
@@ -40,7 +48,9 @@ fn main() {
         Err(_) => true,
     };
 
+    let mut logger = StdIOLogger::new();
+
     if build {
-        project.build().unwrap();
+        project.build(&mut logger).unwrap();
     }
 }
