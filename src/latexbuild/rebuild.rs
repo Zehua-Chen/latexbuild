@@ -31,7 +31,6 @@ fn _needs_rebuild(pdf_modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool
             let modified = dep.metadata()?.modified()?;
 
             if pdf_modified < &modified {
-                println!("pdf {:?}, tex file {:?}", pdf_modified, modified);
                 return Ok(true);
             }
         }
