@@ -1,5 +1,5 @@
 use json::{parse, JsonValue};
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::fs::read;
@@ -21,15 +21,17 @@ use std::string;
 /// getters and setters
 pub struct Project {
     /// The `latex` program used
-    pub latex: OsString,
+    latex: OsString,
     /// The output directory
-    pub bin: PathBuf,
+    bin: PathBuf,
     /// The pdf file
-    pub pdf: PathBuf,
+    pdf: PathBuf,
+    /// The aux file
+    aux: PathBuf,
     /// The entry latex file
-    pub entry: PathBuf,
+    entry: PathBuf,
     /// The include files and directories
-    pub includes: Vec<PathBuf>,
+    includes: Vec<PathBuf>,
 }
 
 /// Error from loading projects
@@ -97,6 +99,7 @@ impl Project {
             latex: OsString::from("pdflatex"),
             bin: PathBuf::from("bin"),
             pdf: PathBuf::from("index.pdf"),
+            aux: PathBuf::from("index.aux"),
             entry: PathBuf::from("index.tex"),
             includes: Vec::new(),
         }
@@ -104,7 +107,7 @@ impl Project {
 
     /// Load a project from a json path
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `path`: the path to the json
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Project, ProjectLoadError> {
@@ -176,12 +179,16 @@ impl Project {
                     _ => {}
                 }
 
-                // After getting entry, resolve pdf
-                let mut pdf_path = project.bin.clone();
-                pdf_path.push(&project.entry);
-                pdf_path.set_extension("pdf");
+                // After getting entry, resolve
+                // - pdf
+                // - aux
+                project.pdf = project.bin.clone();
+                project.pdf.push(&project.entry);
+                project.pdf.set_extension("pdf");
 
-                project.pdf = pdf_path;
+                project.aux = project.bin.clone();
+                project.aux.push(&project.entry);
+                project.aux.set_extension("aux");
 
                 // includes
                 match object.get("includes") {
@@ -216,9 +223,33 @@ impl Project {
         };
     }
 
+    pub fn pdf(&self) -> &Path {
+        return &self.pdf;
+    }
+
+    pub fn aux(&self) -> &Path {
+        return &self.aux;
+    }
+
+    pub fn bin(&self) -> &Path {
+        return &self.bin;
+    }
+
+    pub fn latex(&self) -> &OsStr {
+        return &self.latex;
+    }
+
+    pub fn entry(&self) -> &Path {
+        return &self.entry;
+    }
+
+    pub fn includes(&self) -> &Vec<PathBuf> {
+        return &self.includes;
+    }
+
     /// Use a root path
     ///
-    /// # Parmaeters
+    /// # Arguments
     ///
     /// - `root_path`: the root path
     pub fn use_root_path(&mut self, root_path: &Path) {
@@ -239,5 +270,8 @@ impl Project {
 
         // pdf
         self.pdf = with_prepend(&self.pdf, root_path);
+
+        // aux
+        self.aux = with_prepend(&self.aux, root_path);
     }
 }

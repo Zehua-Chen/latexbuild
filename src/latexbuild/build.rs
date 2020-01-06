@@ -10,25 +10,25 @@ pub enum ProjectBuildError {
 impl Project {
     /// Build a project
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `logger`: the logger
     pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<()> {
-        if !self.bin.exists() {
-            logger.create_dir(self.bin.to_str().unwrap());
-            create_dir(&self.bin)?;
+        if !self.bin().exists() {
+            logger.create_dir(self.bin().to_str().unwrap());
+            create_dir(self.bin())?;
         }
 
-        let output_dir_arg = format!("-output-directory={}", self.bin.to_str().unwrap());
+        let output_dir_arg = format!("-output-directory={}", self.bin().to_str().unwrap());
 
         logger.run_latex(
-            self.latex.to_str().unwrap(),
-            self.bin.to_str().unwrap(),
-            self.entry.to_str().unwrap(),
+            self.latex().to_str().unwrap(),
+            self.bin().to_str().unwrap(),
+            self.entry().to_str().unwrap(),
         );
 
-        let command_output = Command::new(&self.latex)
-            .args(&[&output_dir_arg, self.entry.to_str().unwrap()])
+        let command_output = Command::new(self.latex())
+            .args(&[&output_dir_arg, self.entry().to_str().unwrap()])
             .output()?;
 
         let command_output_str = String::from_utf8(command_output.stdout).unwrap();
@@ -46,7 +46,7 @@ impl Project {
     /// - `Ok(())` if buildable
     /// - `Err(ProjectBuildError)` if not
     pub fn can_build(&self) -> Result<(), ProjectBuildError> {
-        if !self.entry.exists() {
+        if !self.entry().exists() {
             return Err(ProjectBuildError::NoEntry);
         }
 
