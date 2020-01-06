@@ -13,7 +13,7 @@ use std::time::SystemTime;
 /// # Returns
 ///
 /// Return `Ok(true)` if a rebuild is needed, `Ok(false)` if not needed
-fn needs_rebuild(modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool, Error> {
+fn needs_build(modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool, Error> {
     for dep in deps {
         if dep.is_dir() {
             let dir = read_dir(dep).unwrap();
@@ -23,7 +23,7 @@ fn needs_rebuild(modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool, Err
                 children.push(entry_result?.path());
             }
 
-            if needs_rebuild(modified, &children)? {
+            if needs_build(modified, &children)? {
                 return Ok(true);
             }
         } else {
@@ -38,6 +38,12 @@ fn needs_rebuild(modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool, Err
     return Ok(false);
 }
 
+/// An object that determine if a build is still needed
+///
+/// # Discussion
+///
+/// - `should_build()` method must be called before calling the `build()` method
+///   of project
 pub struct NeedsBuildChecker<'a> {
     pub project: &'a Project,
     old_aux: Option<Vec<u8>>,
@@ -46,6 +52,11 @@ pub struct NeedsBuildChecker<'a> {
 }
 
 impl<'a> NeedsBuildChecker<'a> {
+    /// Create a needs build checker using a project
+    ///
+    /// # Arguments
+    ///
+    /// -
     pub fn new(project: &'a Project) -> NeedsBuildChecker<'a> {
         let old_aux: Option<Vec<u8>> = match read(project.aux()) {
             Ok(aux) => Some(aux),
@@ -60,7 +71,12 @@ impl<'a> NeedsBuildChecker<'a> {
         }
     }
 
-    pub fn should_build(&mut self) -> bool {
+    /// Determine if a build is needed
+    ///
+    /// # Returns
+    ///
+    /// `true` is a build is needed
+    pub fn needs_build(&mut self) -> bool {
         if !self.has_checked_sources {
             self.has_checked_sources = true;
             let pdf_metadata = metadata(self.project.pdf());
@@ -79,7 +95,7 @@ impl<'a> NeedsBuildChecker<'a> {
 
                     let modified = metadata.modified().unwrap();
 
-                    return needs_rebuild(&modified, &deps).unwrap();
+                    return needs_build(&modified, &deps).unwrap();
                 }
                 // if pdf does not exist, rebuild
                 Err(_) => {

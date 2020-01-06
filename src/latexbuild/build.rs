@@ -10,7 +10,7 @@ pub enum ProjectBuildError {
 impl Project {
     /// Build a project
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `logger`: the logger
     pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<()> {

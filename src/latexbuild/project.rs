@@ -107,7 +107,7 @@ impl Project {
 
     /// Load a project from a json path
     ///
-    /// # Parameters
+    /// # Arguments
     ///
     /// - `path`: the path to the json
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Project, ProjectLoadError> {
@@ -249,7 +249,7 @@ impl Project {
 
     /// Use a root path
     ///
-    /// # Parmaeters
+    /// # Arguments
     ///
     /// - `root_path`: the root path
     pub fn use_root_path(&mut self, root_path: &Path) {
