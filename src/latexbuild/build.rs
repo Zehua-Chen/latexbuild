@@ -33,7 +33,7 @@ impl Project {
 
         let command_output_str = String::from_utf8(command_output.stdout).unwrap();
 
-        logger.output(&command_output_str);
+        logger.latex_output(&command_output_str);
 
         return Ok(());
     }

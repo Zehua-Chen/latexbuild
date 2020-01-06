@@ -6,8 +6,8 @@ pub trait Logger {
     fn run_latex(&mut self, latex: &str, bin: &str, entry: &str);
     /// Called when a error occurs
     fn error(&mut self, error: &str);
-    /// Called when an output is produced from subcommand
-    fn output(&mut self, output: &str);
+    /// Called when an output is produced from the latex subcommand
+    fn latex_output(&mut self, output: &str);
 }
 
 /// `trait Logger` implementation for standard error
@@ -32,7 +32,7 @@ impl Logger for StdErrLogger {
         eprintln!("{}", error);
     }
 
-    fn output(&mut self, output: &str) {
+    fn latex_output(&mut self, output: &str) {
         eprintln!("command output:\n{}", output);
     }
 }
