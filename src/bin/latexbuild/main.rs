@@ -9,20 +9,31 @@ fn main() {
             .short("c")
             .long("config")
             .default_value("./latexproject.json")])
-        .subcommand(SubCommand::with_name("clean"))
+        .subcommand(
+            SubCommand::with_name("clean").args(&[Arg::with_name("config")
+                .short("c")
+                .long("config")
+                .default_value("./latexproject.json")]),
+        )
         .get_matches();
 
-    let mut logger = StdErrLogger::new();
-    let mut latexbuild = LatexBuild {
-        config_path: PathBuf::from(matches.value_of("config").unwrap()),
-        logger: &mut logger,
-    };
-
     match matches.subcommand() {
-        ("clean", Some(_clean_m)) => {
+        ("clean", Some(clean_m)) => {
+            let mut logger = StdErrLogger::new();
+            let mut latexbuild = LatexBuild {
+                config_path: PathBuf::from(clean_m.value_of("config").unwrap()),
+                logger: &mut logger,
+            };
+
             latexbuild.clean();
         }
         _ => {
+            let mut logger = StdErrLogger::new();
+            let mut latexbuild = LatexBuild {
+                config_path: PathBuf::from(matches.value_of("config").unwrap()),
+                logger: &mut logger,
+            };
+
             latexbuild.build();
         }
     };

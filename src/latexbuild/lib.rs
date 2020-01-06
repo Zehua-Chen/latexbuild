@@ -10,6 +10,7 @@ pub use project::*;
 mod build;
 pub use build::*;
 
+use std::fs::remove_dir_all;
 use std::path::PathBuf;
 
 /// Wrapper for the build pipeline
@@ -27,6 +28,7 @@ impl<'a, L> LatexBuild<'a, L>
 where
     L: Logger,
 {
+    /// Load a project and call `use_root_path` on it
     fn _load_project(&self) -> Project {
         let mut root_path = self.config_path.clone();
         root_path.pop();
@@ -65,5 +67,15 @@ where
         }
     }
 
-    pub fn clean(&mut self) {}
+    pub fn clean(&mut self) {
+        let project = self._load_project();
+
+        match remove_dir_all(project.bin) {
+            Ok(_a) => {}
+            Err(err) => {
+                let message = format!("{}", err);
+                self.logger.error(&message);
+            }
+        }
+    }
 }
