@@ -177,7 +177,11 @@ impl Project {
                 }
 
                 // After getting entry, resolve pdf
-                project.pdf = project.entry.with_extension("pdf");
+                let mut pdf_path = project.bin.clone();
+                pdf_path.push(&project.entry);
+                pdf_path.set_extension("pdf");
+
+                project.pdf = pdf_path;
 
                 // includes
                 match object.get("includes") {
