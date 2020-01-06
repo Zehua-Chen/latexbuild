@@ -10,7 +10,7 @@ pub use project::*;
 mod build;
 pub use build::*;
 
-use std::fs::metadata;
+use std::fs::remove_dir_all;
 use std::path::PathBuf;
 
 /// Wrapper for the build pipeline
@@ -28,13 +28,20 @@ impl<'a, L> LatexBuild<'a, L>
 where
     L: Logger,
 {
-    /// Run the build pipeline
-    pub fn run(&mut self) {
+    /// Load a project and call `use_root_path` on it
+    fn _load_project(&self) -> Project {
         let mut root_path = self.config_path.clone();
         root_path.pop();
 
         let mut project = Project::load(&self.config_path).unwrap();
         project.use_root_path(&root_path);
+
+        return project;
+    }
+
+    /// Run the build pipeline
+    pub fn build(&mut self) {
+        let project = self._load_project();
 
         match project.can_build() {
             Err(error) => match error {
@@ -46,26 +53,29 @@ where
             _ => {}
         }
 
-        let pdf_metadata = metadata(&project.pdf);
-
-        let build = match pdf_metadata {
-            Ok(metadata) => {
-                let modified = metadata.modified().unwrap();
-                let mut deps: Vec<PathBuf> = Vec::new();
-
-                deps.push(project.entry.clone());
-
-                for include in &project.includes {
-                    deps.push(include.clone());
+        match project.needs_rebuild() {
+            Ok(needs_rebuild) => {
+                if needs_rebuild {
+                    project.build(self.logger).unwrap();
+                } else {
+                    println!("no rebuild needed");
                 }
-
-                needs_rebuild(&modified, &deps).unwrap()
             }
-            Err(_) => true,
-        };
+            Err(_) => {
+                return;
+            }
+        }
+    }
 
-        if build {
-            project.build(self.logger).unwrap();
+    pub fn clean(&mut self) {
+        let project = self._load_project();
+
+        match remove_dir_all(project.bin) {
+            Ok(_a) => {}
+            Err(err) => {
+                let message = format!("{}", err);
+                self.logger.error(&message);
+            }
         }
     }
 }
