@@ -1,8 +1,8 @@
 mod io;
 pub use io::*;
 
-mod rebuild;
-pub use rebuild::*;
+mod build_check;
+pub use build_check::*;
 
 mod project;
 pub use project::*;
@@ -53,7 +53,7 @@ where
             _ => {}
         }
 
-        match project.needs_rebuild() {
+        match project.needs_build() {
             Ok(needs_rebuild) => {
                 if needs_rebuild {
                     project.build(self.logger).unwrap();
@@ -70,7 +70,7 @@ where
     pub fn clean(&mut self) {
         let project = self._load_project();
 
-        match remove_dir_all(project.bin) {
+        match remove_dir_all(project.bin()) {
             Ok(_a) => {}
             Err(err) => {
                 let message = format!("{}", err);

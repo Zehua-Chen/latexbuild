@@ -1,5 +1,5 @@
 use json::{parse, JsonValue};
-use std::ffi::OsString;
+use std::ffi::{OsString, OsStr};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::fs::read;
@@ -21,15 +21,15 @@ use std::string;
 /// getters and setters
 pub struct Project {
     /// The `latex` program used
-    pub latex: OsString,
+    latex: OsString,
     /// The output directory
-    pub bin: PathBuf,
+    bin: PathBuf,
     /// The pdf file
-    pub pdf: PathBuf,
+    pdf: PathBuf,
     /// The entry latex file
-    pub entry: PathBuf,
+    entry: PathBuf,
     /// The include files and directories
-    pub includes: Vec<PathBuf>,
+    includes: Vec<PathBuf>,
 }
 
 /// Error from loading projects
@@ -214,6 +214,26 @@ impl Project {
             }
             _ => Err(ProjectLoadError::FormatError),
         };
+    }
+
+    pub fn pdf(&self) -> &Path {
+        return &self.pdf;
+    }
+
+    pub fn bin(&self) -> &Path {
+        return &self.bin;
+    }
+
+    pub fn latex(&self) -> &OsStr {
+        return &self.latex;
+    }
+
+    pub fn entry(&self) -> &Path {
+        return &self.entry;
+    }
+
+    pub fn includes(&self) -> &Vec<PathBuf> {
+        return &self.includes;
     }
 
     /// Use a root path

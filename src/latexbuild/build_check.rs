@@ -8,13 +8,13 @@ use std::time::SystemTime;
 /// Check if a rebuild is needed
 ///
 /// # Arguments
-/// - `pdf_modified`; the time at which the pdf is modified
+/// - `modified`; the time at which the depended file is modified
 /// - `includes`: the next level of dependencies
 ///
 /// # Returns
 ///
 /// Return `Ok(true)` if a rebuild is needed, `Ok(false)` if not needed
-fn _needs_rebuild(pdf_modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool, Error> {
+fn _needs_rebuild(modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool, Error> {
     for dep in deps {
         if dep.is_dir() {
             let dir = read_dir(dep).unwrap();
@@ -24,13 +24,13 @@ fn _needs_rebuild(pdf_modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool
                 children.push(entry_result?.path());
             }
 
-            if _needs_rebuild(pdf_modified, &children)? {
+            if _needs_rebuild(modified, &children)? {
                 return Ok(true);
             }
         } else {
-            let modified = dep.metadata()?.modified()?;
+            let dep_modified = dep.metadata()?.modified()?;
 
-            if pdf_modified < &modified {
+            if modified < &dep_modified {
                 return Ok(true);
             }
         }
@@ -42,26 +42,20 @@ fn _needs_rebuild(pdf_modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool
 impl Project {
     /// Check if a rebuild is needed
     ///
-    /// # Arguments
-    /// - `pdf_modified`; the time at which the pdf is modified
-    /// - `includes`: the next level of dependencies
-    ///
     /// # Returns
     ///
     /// Return `Ok(true)` if a rebuild is needed, `Ok(false)` if not needed
-    pub fn needs_rebuild(&self) -> Result<bool, io::Error> {
-        let pdf_metadata = metadata(&self.pdf);
-
-        println!("pdf path = {:?}", self.pdf);
+    pub fn needs_build(&self) -> Result<bool, io::Error> {
+        let pdf_metadata = metadata(self.pdf());
 
         return match pdf_metadata {
             Ok(metadata) => {
                 let modified = metadata.modified().unwrap();
                 let mut deps: Vec<PathBuf> = Vec::new();
 
-                deps.push(self.entry.clone());
+                deps.push(PathBuf::from(self.entry()));
 
-                for include in &self.includes {
+                for include in self.includes() {
                     deps.push(include.clone());
                 }
 
