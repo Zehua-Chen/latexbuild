@@ -8,6 +8,11 @@ pub enum ProjectBuildError {
 }
 
 impl Project {
+    /// Build a project
+    ///
+    /// # Parameters
+    ///
+    /// - `logger`: the logger
     pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<()> {
         if !self.bin.exists() {
             logger.create_dir(self.bin.to_str().unwrap());
@@ -33,6 +38,13 @@ impl Project {
         return Ok(());
     }
 
+    /// Determine if a project is buildable, it is recommended to call this
+    /// method before calling the `build` method
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())` if buildable
+    /// - `Err(ProjectBuildError)` if not
     pub fn can_build(&self) -> Result<(), ProjectBuildError> {
         if !self.entry.exists() {
             return Err(ProjectBuildError::NoEntry);

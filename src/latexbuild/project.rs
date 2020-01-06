@@ -20,17 +20,27 @@ use std::string;
 /// edited by the consumer. In the future, the fields would be replaced by
 /// getters and setters
 pub struct Project {
+    /// The `latex` program used
     pub latex: OsString,
+    /// The output directory
     pub bin: PathBuf,
+    /// The pdf file
     pub pdf: PathBuf,
+    /// The entry latex file
     pub entry: PathBuf,
+    /// The include files and directories
     pub includes: Vec<PathBuf>,
 }
 
+/// Error from loading projects
 pub enum ProjectLoadError {
+    /// Something wrong with the format
     FormatError,
+    /// Something wrong with the parser
     ParserError(json::Error),
+    /// Something wrong with IO
     IOError(io::Error),
+    /// Something wrong with UTF8 conversion
     FromUtf8Error(string::FromUtf8Error),
 }
 
@@ -75,6 +85,13 @@ fn with_prepend(path: &PathBuf, prepend: &Path) -> PathBuf {
 }
 
 impl Project {
+    /// Create a new project with the following default values
+    ///
+    /// - `latex`: `pdflatex`
+    /// - `bin`: `bin`
+    /// - `pdf`: `index.pdf`
+    /// - `entry`: `index.tex`
+    /// - `includes`: []
     pub fn new() -> Project {
         Project {
             latex: OsString::from("pdflatex"),
@@ -85,6 +102,11 @@ impl Project {
         }
     }
 
+    /// Load a project from a json path
+    ///
+    /// # Parameters
+    ///
+    /// - `path`: the path to the json
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Project, ProjectLoadError> {
         let mut project = Project::new();
         let file_content: String;
@@ -190,6 +212,11 @@ impl Project {
         };
     }
 
+    /// Use a root path
+    ///
+    /// # Parmaeters
+    ///
+    /// - `root_path`: the root path
     pub fn use_root_path(&mut self, root_path: &Path) {
         // bin
         self.bin = with_prepend(&self.bin, root_path);

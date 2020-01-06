@@ -13,11 +13,14 @@ pub use build::*;
 use std::fs::metadata;
 use std::path::PathBuf;
 
+/// Wrapper for the build pipeline
 pub struct LatexBuild<'a, L>
 where
     L: Logger,
 {
+    /// Path to the config
     pub config_path: PathBuf,
+    /// A mutable reference to the logger
     pub logger: &'a mut L,
 }
 
@@ -25,6 +28,7 @@ impl<'a, L> LatexBuild<'a, L>
 where
     L: Logger,
 {
+    /// Run the build pipeline
     pub fn run(&mut self) {
         let mut root_path = self.config_path.clone();
         root_path.pop();
