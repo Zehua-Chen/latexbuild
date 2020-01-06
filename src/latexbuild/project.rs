@@ -1,5 +1,5 @@
 use json::{parse, JsonValue};
-use std::ffi::{OsString, OsStr};
+use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::fs::read;
@@ -26,6 +26,8 @@ pub struct Project {
     bin: PathBuf,
     /// The pdf file
     pdf: PathBuf,
+    /// The aux file
+    aux: PathBuf,
     /// The entry latex file
     entry: PathBuf,
     /// The include files and directories
@@ -97,6 +99,7 @@ impl Project {
             latex: OsString::from("pdflatex"),
             bin: PathBuf::from("bin"),
             pdf: PathBuf::from("index.pdf"),
+            aux: PathBuf::from("index.aux"),
             entry: PathBuf::from("index.tex"),
             includes: Vec::new(),
         }
@@ -176,12 +179,16 @@ impl Project {
                     _ => {}
                 }
 
-                // After getting entry, resolve pdf
-                let mut pdf_path = project.bin.clone();
-                pdf_path.push(&project.entry);
-                pdf_path.set_extension("pdf");
+                // After getting entry, resolve
+                // - pdf
+                // - aux
+                project.pdf = project.bin.clone();
+                project.pdf.push(&project.entry);
+                project.pdf.set_extension("pdf");
 
-                project.pdf = pdf_path;
+                project.aux = project.bin.clone();
+                project.aux.push(&project.entry);
+                project.aux.set_extension("aux");
 
                 // includes
                 match object.get("includes") {
@@ -218,6 +225,10 @@ impl Project {
 
     pub fn pdf(&self) -> &Path {
         return &self.pdf;
+    }
+
+    pub fn aux(&self) -> &Path {
+        return &self.aux;
     }
 
     pub fn bin(&self) -> &Path {
@@ -259,5 +270,8 @@ impl Project {
 
         // pdf
         self.pdf = with_prepend(&self.pdf, root_path);
+
+        // aux
+        self.aux = with_prepend(&self.aux, root_path);
     }
 }
