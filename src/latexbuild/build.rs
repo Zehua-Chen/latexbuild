@@ -13,7 +13,7 @@ impl Project {
     /// # Arguments
     ///
     /// - `logger`: the logger
-    pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<()> {
+    pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<bool> {
         if !self.bin().exists() {
             logger.create_dir(self.bin().to_str().unwrap());
             create_dir(self.bin())?;
@@ -34,7 +34,7 @@ impl Project {
 
         logger.command_output(&command_output_str);
 
-        return Ok(());
+        return Ok(command_output.status.success());
     }
 
     /// Determine if a project is buildable, it is recommended to call this

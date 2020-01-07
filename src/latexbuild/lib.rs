@@ -57,7 +57,11 @@ where
 
         while needs_build_checker.needs_build() {
             println!("building project");
-            project.build(self.logger).unwrap();
+
+            if !project.build(self.logger).unwrap() {
+                println!("build stopo due to error");
+                break;
+            }
         }
     }
 
