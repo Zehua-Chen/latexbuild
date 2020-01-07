@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use ansi_term::{Color, Style};
 
 /// Logger
 pub trait Logger {
@@ -57,27 +58,36 @@ impl Logger for StdErrLogger {
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        eprint!("\n{} ", command.as_ref().to_str().unwrap());
+        let mut raw_output = String::new();
+
+        raw_output.push_str(command.as_ref().to_str().unwrap());
 
         for arg in args {
-            eprint!("{} ", arg.as_ref().to_str().unwrap());
+            raw_output.push_str(arg.as_ref().to_str().unwrap());
+            raw_output.push(' ');
         }
 
-        eprintln!();
+        let output = Color::Green.paint(raw_output);
+        eprintln!("{}", output);
     }
 
     fn command_output<S>(&mut self, s: S)
     where
         S: AsRef<str>,
     {
-        eprintln!("\n{}", s.as_ref());
+        let output = Style::new().dimmed().paint(s.as_ref());
+
+        eprintln!();
+        eprintln!("{}", output);
     }
 
     fn error<S>(&mut self, error: S) where S: AsRef<str> {
-        eprintln!("{}", error.as_ref());
+        let raw_output = format!("==> {}", error.as_ref());
+        let output = Color::Red.paint(raw_output);
+        eprintln!("{}", output);
     }
 
     fn message<S>(&mut self, message: S) where S: AsRef<str> {
-        eprintln!("{}", message.as_ref());
+        eprintln!("==> {}", message.as_ref());
     }
 }

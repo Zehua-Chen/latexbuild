@@ -59,7 +59,7 @@ where
             self.logger.message("building project");
 
             if !project.build(self.logger).unwrap() {
-                self.logger.error("build stopo due to error");
+                self.logger.error("build stopped due to error");
                 break;
             }
         }
@@ -67,6 +67,7 @@ where
 
     pub fn clean(&mut self) {
         let project = self.load_project();
+        self.logger.message("cleaning bin directory");
 
         match remove_dir_all(project.bin()) {
             Ok(_a) => {}
