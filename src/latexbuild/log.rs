@@ -3,17 +3,38 @@ use std::ffi::OsStr;
 /// Logger
 pub trait Logger {
     /// Called when a directory is created
-    fn create_dir(&mut self, dir: &str);
+    fn create_dir<S>(&mut self, dir: S) where S: AsRef<str>;
+    /// Called when a command is run
+    ///
+    /// # Parameters
+    ///
+    /// - `command`: the comamnd string
+    /// - `args`: an iterator to the arguments used
     fn run_command<CS, I, S>(&mut self, command: CS, args: I)
     where
         CS: AsRef<OsStr>,
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>;
+    /// Called when a command has produced outputs
+    ///
+    /// # Parameter
+    ///
+    /// - `s`: the command output
     fn command_output<S>(&mut self, s: S)
     where
         S: AsRef<str>;
     /// Called when a error occurs
-    fn error(&mut self, error: &str);
+    ///
+    /// # Parameter
+    ///
+    /// - `error`: the error string
+    fn error<S>(&mut self, error: S) where S: AsRef<str>;
+    /// Called when a message is produced
+    ///
+    /// # Paramaeter
+    ///
+    /// - `message`: the message string
+    fn message<S>(&mut self, message: S) where S: AsRef<str>;
 }
 
 /// `trait Logger` implementation for standard error
@@ -26,8 +47,8 @@ impl StdErrLogger {
 }
 
 impl Logger for StdErrLogger {
-    fn create_dir(&mut self, dir: &str) {
-        eprintln!("creating directory {}", dir);
+    fn create_dir<S>(&mut self, dir: S) where S: AsRef<str> {
+        eprintln!("creating directory {}", dir.as_ref());
     }
 
     fn run_command<CS, I, S>(&mut self, command: CS, args: I)
@@ -52,7 +73,11 @@ impl Logger for StdErrLogger {
         eprintln!("\n{}", s.as_ref());
     }
 
-    fn error(&mut self, error: &str) {
-        eprintln!("{}", error);
+    fn error<S>(&mut self, error: S) where S: AsRef<str> {
+        eprintln!("{}", error.as_ref());
+    }
+
+    fn message<S>(&mut self, message: S) where S: AsRef<str> {
+        eprintln!("{}", message.as_ref());
     }
 }

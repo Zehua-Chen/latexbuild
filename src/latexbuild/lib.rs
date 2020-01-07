@@ -46,7 +46,7 @@ where
         match project.can_build() {
             Err(error) => match error {
                 ProjectBuildError::NoEntry => {
-                    println!("no entry file");
+                    self.logger.error("no entry file");
                     return;
                 }
             },
@@ -56,10 +56,10 @@ where
         let mut needs_build_checker = NeedsBuildChecker::new(&project);
 
         while needs_build_checker.needs_build() {
-            println!("building project");
+            self.logger.message("building project");
 
             if !project.build(self.logger).unwrap() {
-                println!("build stopo due to error");
+                self.logger.error("build stopo due to error");
                 break;
             }
         }
