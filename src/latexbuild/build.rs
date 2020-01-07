@@ -13,7 +13,7 @@ impl Project {
     /// # Arguments
     ///
     /// - `logger`: the logger
-    pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<()> {
+    pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<bool> {
         if !self.bin().exists() {
             logger.create_dir(self.bin().to_str().unwrap());
             create_dir(self.bin())?;
@@ -21,10 +21,9 @@ impl Project {
 
         let output_dir_arg = format!("-output-directory={}", self.bin().to_str().unwrap());
 
-        logger.run_latex(
-            self.latex().to_str().unwrap(),
-            self.bin().to_str().unwrap(),
-            self.entry().to_str().unwrap(),
+        logger.run_command(
+            self.latex(),
+            &[&output_dir_arg, self.entry().to_str().unwrap()],
         );
 
         let command_output = Command::new(self.latex())
@@ -33,9 +32,9 @@ impl Project {
 
         let command_output_str = String::from_utf8(command_output.stdout).unwrap();
 
-        logger.latex_output(&command_output_str);
+        logger.command_output(&command_output_str);
 
-        return Ok(());
+        return Ok(command_output.status.success());
     }
 
     /// Determine if a project is buildable, it is recommended to call this

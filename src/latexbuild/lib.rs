@@ -1,5 +1,5 @@
-mod io;
-pub use io::*;
+mod log;
+pub use log::*;
 
 mod build_check;
 pub use build_check::*;
@@ -46,7 +46,7 @@ where
         match project.can_build() {
             Err(error) => match error {
                 ProjectBuildError::NoEntry => {
-                    println!("no entry file");
+                    self.logger.error("no entry file");
                     return;
                 }
             },
@@ -56,13 +56,18 @@ where
         let mut needs_build_checker = NeedsBuildChecker::new(&project);
 
         while needs_build_checker.needs_build() {
-            println!("building project");
-            project.build(self.logger).unwrap();
+            self.logger.message("building project");
+
+            if !project.build(self.logger).unwrap() {
+                self.logger.error("build stopped due to error");
+                break;
+            }
         }
     }
 
     pub fn clean(&mut self) {
         let project = self.load_project();
+        self.logger.message("cleaning bin directory");
 
         match remove_dir_all(project.bin()) {
             Ok(_a) => {}
