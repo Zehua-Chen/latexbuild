@@ -1,10 +1,8 @@
-use std::ffi::OsStr;
 use ansi_term::{Color, Style};
+use std::ffi::OsStr;
 
 /// Logger
 pub trait Logger {
-    /// Called when a directory is created
-    fn create_dir<S>(&mut self, dir: S) where S: AsRef<str>;
     /// Called when a command is run
     ///
     /// # Parameters
@@ -29,13 +27,17 @@ pub trait Logger {
     /// # Parameter
     ///
     /// - `error`: the error string
-    fn error<S>(&mut self, error: S) where S: AsRef<str>;
+    fn error<S>(&mut self, error: S)
+    where
+        S: AsRef<str>;
     /// Called when a message is produced
     ///
     /// # Paramaeter
     ///
     /// - `message`: the message string
-    fn message<S>(&mut self, message: S) where S: AsRef<str>;
+    fn message<S>(&mut self, message: S)
+    where
+        S: AsRef<str>;
 }
 
 /// `trait Logger` implementation for standard error
@@ -48,10 +50,6 @@ impl StdErrLogger {
 }
 
 impl Logger for StdErrLogger {
-    fn create_dir<S>(&mut self, dir: S) where S: AsRef<str> {
-        eprintln!("creating directory {}", dir.as_ref());
-    }
-
     fn run_command<CS, I, S>(&mut self, command: CS, args: I)
     where
         CS: AsRef<OsStr>,
@@ -81,13 +79,19 @@ impl Logger for StdErrLogger {
         eprintln!("{}", output);
     }
 
-    fn error<S>(&mut self, error: S) where S: AsRef<str> {
+    fn error<S>(&mut self, error: S)
+    where
+        S: AsRef<str>,
+    {
         let raw_output = format!("==> {}", error.as_ref());
         let output = Color::Red.paint(raw_output);
         eprintln!("{}", output);
     }
 
-    fn message<S>(&mut self, message: S) where S: AsRef<str> {
+    fn message<S>(&mut self, message: S)
+    where
+        S: AsRef<str>,
+    {
         eprintln!("==> {}", message.as_ref());
     }
 }

@@ -1,3 +1,4 @@
+use json::object::Object;
 use json::{parse, JsonValue};
 use std::ffi::{OsStr, OsString};
 use std::fmt;
@@ -12,6 +13,8 @@ use std::string;
 /// # Fields
 ///
 /// - `pdf`: note that the pdf field is not in the project specification,
+///   instead, it is inferred from the project specification
+/// - `aux`: note that the aux field is not in the project specification,
 ///   instead, it is inferred from the project specification
 ///
 /// # Discussion
@@ -273,5 +276,29 @@ impl Project {
 
         // aux
         self.aux = with_prepend(&self.aux, root_path);
+    }
+}
+
+impl Into<JsonValue> for Project {
+    fn into(self) -> JsonValue {
+        let default = Project::new();
+        let mut object = Object::new();
+
+        object.insert(
+            "latex",
+            JsonValue::String(String::from(default.latex().to_str().unwrap())),
+        );
+        object.insert(
+            "bin",
+            JsonValue::String(String::from(default.bin().to_str().unwrap())),
+        );
+        object.insert(
+            "entry",
+            JsonValue::String(String::from(default.entry().to_str().unwrap())),
+        );
+
+        object.insert("includes", JsonValue::new_array());
+
+        return JsonValue::Object(object);
     }
 }
