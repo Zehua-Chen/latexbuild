@@ -15,7 +15,7 @@ impl Project {
     /// - `logger`: the logger
     pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<bool> {
         if !self.bin().exists() {
-            logger.create_dir(self.bin().to_str().unwrap());
+            logger.message("creating bin directory");
             create_dir(self.bin())?;
         }
 

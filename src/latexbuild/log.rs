@@ -3,10 +3,6 @@ use std::ffi::OsStr;
 
 /// Logger
 pub trait Logger {
-    /// Called when a directory is created
-    fn create_dir<S>(&mut self, dir: S)
-    where
-        S: AsRef<str>;
     /// Called when a command is run
     ///
     /// # Parameters
@@ -54,13 +50,6 @@ impl StdErrLogger {
 }
 
 impl Logger for StdErrLogger {
-    fn create_dir<S>(&mut self, dir: S)
-    where
-        S: AsRef<str>,
-    {
-        eprintln!("creating directory {}", dir.as_ref());
-    }
-
     fn run_command<CS, I, S>(&mut self, command: CS, args: I)
     where
         CS: AsRef<OsStr>,
