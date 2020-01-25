@@ -59,6 +59,7 @@ impl Logger for StdErrLogger {
         let mut raw_output = String::new();
 
         raw_output.push_str(command.as_ref().to_str().unwrap());
+        raw_output.push(' ');
 
         for arg in args {
             raw_output.push_str(arg.as_ref().to_str().unwrap());
