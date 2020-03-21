@@ -10,3 +10,4 @@
 **/*.rs.bk
 
 test_project/
+.idea/
