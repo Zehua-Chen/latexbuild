@@ -1,5 +1,5 @@
 use super::Generate;
-
+use latexbuild::Project;
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 
@@ -67,5 +67,13 @@ impl Generate for Makefile {
         }
 
         return Ok(());
+    }
+}
+
+impl From<Project> for Makefile {
+    fn from(project: Project) -> Makefile {
+        let mut makefile = Makefile::new();
+
+        return makefile;
     }
 }

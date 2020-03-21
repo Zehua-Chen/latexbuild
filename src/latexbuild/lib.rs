@@ -28,8 +28,9 @@ impl<'a, L> LatexBuild<'a, L>
 where
     L: Logger,
 {
-    /// Load a project and call `use_root_path` on it
-    fn load_project(&self) -> Project {
+    /// Load a project and call `use_root_path` on it. In another word,
+    /// load a project and make all the paths absolute
+    pub fn load_project(&self) -> Project {
         let mut root_path = self.config_path.clone();
         root_path.pop();
 

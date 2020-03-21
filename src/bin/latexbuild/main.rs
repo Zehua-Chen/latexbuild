@@ -3,6 +3,7 @@ use latexbuild::*;
 use std::fs::{create_dir, write};
 use std::path::PathBuf;
 
+mod generate;
 mod subcommands;
 
 const ENTRY_STR: &'static str = "\\documentclass{article}
@@ -41,15 +42,20 @@ fn main() {
                     .index(1)])
                 .about("Create a new project"),
         )
+        .subcommand(
+            SubCommand::with_name("generate")
+                .args(&[Arg::with_name("format")
+                    .short("f")
+                    .long("format")
+                    .help("Format of the build system")])
+                .about("Generate the configuration of another build system"),
+        )
         .get_matches();
 
     match matches.subcommand() {
-        ("clean", Some(clean_m)) => {
-            subcommands::clean(clean_m);
-        }
-        ("new", Some(new_m)) => {
-            subcommands::new(new_m);
-        }
+        ("clean", Some(m)) => subcommands::clean(m),
+        ("new", Some(m)) => subcommands::new(m),
+        ("generate", Some(m)) => subcommands::generate(m),
         _ => {
             subcommands::build(&matches);
         }
