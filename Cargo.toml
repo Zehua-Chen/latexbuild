@@ -3,6 +3,9 @@ name = "latexbuild"
 version = "0.1.0"
 authors = ["Zehua-Chen <peterchen06242000@outlook.com>"]
 edition = "2018"
+description = "Tool to build latex documents"
+license-file = "LICENSE"
+repository = "https://github.com/Zehua-Chen/latexbuild.git"
 
 [[bin]]
 name = "latexbuild"
