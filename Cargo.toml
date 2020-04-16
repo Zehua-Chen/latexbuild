@@ -4,7 +4,7 @@ version = "0.2.0"
 authors = ["Zehua-Chen <peterchen06242000@outlook.com>"]
 edition = "2018"
 description = "Tool to build latex documents"
-license-file = "LICENSE"
+license-file = "MIT"
 repository = "https://github.com/Zehua-Chen/latexbuild.git"
 
 [[bin]]
