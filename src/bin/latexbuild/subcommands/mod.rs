@@ -34,4 +34,12 @@ pub fn build(matches: &ArgMatches) {
     latexbuild.build();
 }
 
-pub fn generate(matches: &ArgMatches) {}
+pub fn generate(matches: &ArgMatches) {
+    let mut logger = StdErrLogger::new();
+    let mut latexbuild = LatexBuild {
+        config_path: PathBuf::from(matches.value_of("config").unwrap()),
+        logger: &mut logger,
+    };
+
+    latexbuild.generate_make();
+}

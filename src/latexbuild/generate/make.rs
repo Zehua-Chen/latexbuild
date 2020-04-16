@@ -1,5 +1,5 @@
+use super::super::Project;
 use super::Generate;
-use latexbuild::Project;
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 
@@ -52,7 +52,7 @@ impl Generate for Makefile {
                 Some(dep) => {
                     dep.generate(writer)?;
                 }
-                _ => continue,
+                _ => {},
             }
 
             for dep in dep_iter {
@@ -63,7 +63,7 @@ impl Generate for Makefile {
             writeln!(writer)?;
             write!(writer, "\t")?;
 
-            write!(writer, "{}", target.command)?;
+            writeln!(writer, "{}", target.command)?;
         }
 
         return Ok(());
@@ -72,7 +72,35 @@ impl Generate for Makefile {
 
 impl From<Project> for Makefile {
     fn from(project: Project) -> Makefile {
+        let mut dependencies: Vec<MakeDependency> = Vec::new();
+
+        for file in project.files() {
+            dependencies.push(MakeDependency::Regular(String::from(
+                file.to_str().unwrap(),
+            )));
+        }
+
+        dependencies.push(MakeDependency::OrderOnly(String::from(
+            project.bin().to_str().unwrap(),
+        )));
+
         let mut makefile = Makefile::new();
+
+        makefile.targets.push(MakeTarget {
+            target: String::from(project.bin().to_str().unwrap()),
+            command: format!("mkdir {}", project.bin().to_str().unwrap()),
+            dependencies: Vec::new()
+        });
+
+        makefile.targets.push(MakeTarget {
+            target: String::from(project.pdf().to_str().unwrap()),
+            command: format!(
+                "{} -output-directory={} {}",
+                project.latex().to_str().unwrap(),
+                project.bin().to_str().unwrap(),
+                project.entry().to_str().unwrap()),
+            dependencies: dependencies,
+        });
 
         return makefile;
     }

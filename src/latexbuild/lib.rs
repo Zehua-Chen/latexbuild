@@ -10,7 +10,11 @@ pub use project::*;
 mod build;
 pub use build::*;
 
-use std::fs::remove_dir_all;
+mod generate;
+use generate::Generate;
+
+use std::fs::{remove_dir_all, File};
+use std::io::BufWriter;
 use std::path::PathBuf;
 
 /// Wrapper for the build pipeline
@@ -77,5 +81,19 @@ where
                 self.logger.error(&message);
             }
         }
+    }
+
+    pub fn generate_make(&mut self) {
+        let project = self.load_project();
+        let makefile = generate::Makefile::from(project);
+
+        let mut file = self.config_path.clone();
+        file.pop();
+        file.push("Makefile");
+
+        let file = File::create(file).unwrap();
+        let mut file_writer = BufWriter::new(file);
+
+        makefile.generate(&mut file_writer).unwrap();
     }
 }

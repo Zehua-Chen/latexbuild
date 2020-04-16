@@ -3,7 +3,6 @@ use latexbuild::*;
 use std::fs::{create_dir, write};
 use std::path::PathBuf;
 
-mod generate;
 mod subcommands;
 
 const ENTRY_STR: &'static str = "\\documentclass{article}
@@ -44,11 +43,12 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("generate")
-                .args(&[Arg::with_name("format")
-                    .short("f")
-                    .long("format")
-                    .help("Format of the build system")])
-                .about("Generate the configuration of another build system"),
+                .args(&[Arg::with_name("config")
+                    .short("c")
+                    .long("config")
+                    .help("Path to the configuration file")
+                    .default_value("./latexproject.json")])
+                .about("Generate a makefile"),
         )
         .get_matches();
 
