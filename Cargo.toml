@@ -1,6 +1,6 @@
 [package]
 name = "latexbuild"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Zehua-Chen <peterchen06242000@outlook.com>"]
 edition = "2018"
 description = "Tool to build latex documents"
