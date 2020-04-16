@@ -84,7 +84,7 @@ where
     }
 
     pub fn generate_make(&mut self) {
-        let project = self.load_project();
+        let project = Project::load(&self.config_path).unwrap();
         let makefile = generate::Makefile::from(project);
 
         let mut file = self.config_path.clone();

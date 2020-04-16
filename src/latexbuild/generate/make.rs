@@ -87,12 +87,6 @@ impl From<Project> for Makefile {
         let mut makefile = Makefile::new();
 
         makefile.targets.push(MakeTarget {
-            target: String::from(project.bin().to_str().unwrap()),
-            command: format!("mkdir {}", project.bin().to_str().unwrap()),
-            dependencies: Vec::new()
-        });
-
-        makefile.targets.push(MakeTarget {
             target: String::from(project.pdf().to_str().unwrap()),
             command: format!(
                 "{} -output-directory={} {}",
@@ -100,6 +94,12 @@ impl From<Project> for Makefile {
                 project.bin().to_str().unwrap(),
                 project.entry().to_str().unwrap()),
             dependencies: dependencies,
+        });
+
+        makefile.targets.push(MakeTarget {
+            target: String::from(project.bin().to_str().unwrap()),
+            command: format!("mkdir {}", project.bin().to_str().unwrap()),
+            dependencies: Vec::new()
         });
 
         return makefile;
