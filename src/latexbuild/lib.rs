@@ -10,7 +10,11 @@ pub use project::*;
 mod build;
 pub use build::*;
 
-use std::fs::remove_dir_all;
+mod generate;
+use generate::Generate;
+
+use std::fs::{remove_dir_all, File};
+use std::io::BufWriter;
 use std::path::PathBuf;
 
 /// Wrapper for the build pipeline
@@ -28,8 +32,9 @@ impl<'a, L> LatexBuild<'a, L>
 where
     L: Logger,
 {
-    /// Load a project and call `use_root_path` on it
-    fn load_project(&self) -> Project {
+    /// Load a project and call `use_root_path` on it. In another word,
+    /// load a project and make all the paths absolute
+    pub fn load_project(&self) -> Project {
         let mut root_path = self.config_path.clone();
         root_path.pop();
 
@@ -76,5 +81,19 @@ where
                 self.logger.error(&message);
             }
         }
+    }
+
+    pub fn generate_make(&mut self) {
+        let project = Project::load(&self.config_path).unwrap();
+        let makefile = generate::Makefile::from(project);
+
+        let mut file = self.config_path.clone();
+        file.pop();
+        file.push("Makefile");
+
+        let file = File::create(file).unwrap();
+        let mut file_writer = BufWriter::new(file);
+
+        makefile.generate(&mut file_writer).unwrap();
     }
 }

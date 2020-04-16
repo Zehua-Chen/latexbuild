@@ -11,3 +11,5 @@
 
 test_project/
 .idea/
+.DS_Store
+.vscode/

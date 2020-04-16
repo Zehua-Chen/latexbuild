@@ -3,10 +3,40 @@ use json::{parse, JsonValue};
 use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
-use std::fs::read;
+use std::fs::{read, read_dir};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::string;
+
+fn resolve_includes(includes: Vec<PathBuf>) -> Vec<PathBuf> {
+    let mut files: Vec<PathBuf> = Vec::new();
+    let mut to_explore: Vec<PathBuf> = Vec::new();
+
+    for include in includes {
+        if include.is_dir() {
+            to_explore.push(include);
+        } else {
+            files.push(include);
+        }
+    }
+
+    while !to_explore.is_empty() {
+        let dir = to_explore.pop().unwrap();
+
+        for dir_item in read_dir(dir).unwrap() {
+            let dir_item = dir_item.unwrap().path();
+
+            if dir_item.is_dir() {
+                to_explore.push(dir_item);
+                continue;
+            }
+
+            files.push(dir_item);
+        }
+    }
+
+    return files;
+}
 
 /// A project loaded from disk
 ///
@@ -34,7 +64,7 @@ pub struct Project {
     /// The entry latex file
     entry: PathBuf,
     /// The include files and directories
-    includes: Vec<PathBuf>,
+    files: Vec<PathBuf>,
 }
 
 /// Error from loading projects
@@ -98,13 +128,16 @@ impl Project {
     /// - `entry`: `index.tex`
     /// - `includes`: []
     pub fn new() -> Project {
+        let mut files: Vec<PathBuf> = Vec::new();
+        files.push(PathBuf::from("index.tex"));
+
         Project {
             latex: OsString::from("pdflatex"),
             bin: PathBuf::from("bin"),
-            pdf: PathBuf::from("index.pdf"),
-            aux: PathBuf::from("index.aux"),
+            pdf: PathBuf::from("bin/index.pdf"),
+            aux: PathBuf::from("bin/index.aux"),
             entry: PathBuf::from("index.tex"),
-            includes: Vec::new(),
+            files,
         }
     }
 
@@ -200,12 +233,10 @@ impl Project {
                             for include in includes_array {
                                 match include {
                                     JsonValue::Short(include_short) => {
-                                        project
-                                            .includes
-                                            .push(PathBuf::from(include_short.as_str()));
+                                        project.files.push(PathBuf::from(include_short.as_str()));
                                     }
                                     JsonValue::String(include_str) => {
-                                        project.includes.push(PathBuf::from(include_str));
+                                        project.files.push(PathBuf::from(include_str));
                                     }
                                     _ => {
                                         return Err(ProjectLoadError::FormatError);
@@ -219,6 +250,9 @@ impl Project {
                     },
                     _ => {}
                 }
+
+                project.files.push(PathBuf::from("index.tex"));
+                project.files = resolve_includes(project.files);
 
                 Ok(project)
             }
@@ -246,8 +280,8 @@ impl Project {
         return &self.entry;
     }
 
-    pub fn includes(&self) -> &Vec<PathBuf> {
-        return &self.includes;
+    pub fn files(&self) -> &Vec<PathBuf> {
+        return &self.files;
     }
 
     /// Use a root path
@@ -263,13 +297,13 @@ impl Project {
         self.entry = with_prepend(&self.entry, root_path);
 
         // includes
-        let mut includes: Vec<PathBuf> = Vec::new();
+        let mut files: Vec<PathBuf> = Vec::new();
 
-        for include in &self.includes {
-            includes.push(with_prepend(include, root_path));
+        for file in &self.files {
+            files.push(with_prepend(file, root_path));
         }
 
-        self.includes = includes;
+        self.files = files;
 
         // pdf
         self.pdf = with_prepend(&self.pdf, root_path);

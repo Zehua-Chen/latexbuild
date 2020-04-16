@@ -41,15 +41,21 @@ fn main() {
                     .index(1)])
                 .about("Create a new project"),
         )
+        .subcommand(
+            SubCommand::with_name("generate")
+                .args(&[Arg::with_name("config")
+                    .short("c")
+                    .long("config")
+                    .help("Path to the configuration file")
+                    .default_value("./latexproject.json")])
+                .about("Generate a makefile"),
+        )
         .get_matches();
 
     match matches.subcommand() {
-        ("clean", Some(clean_m)) => {
-            subcommands::clean(clean_m);
-        }
-        ("new", Some(new_m)) => {
-            subcommands::new(new_m);
-        }
+        ("clean", Some(m)) => subcommands::clean(m),
+        ("new", Some(m)) => subcommands::new(m),
+        ("generate", Some(m)) => subcommands::generate(m),
         _ => {
             subcommands::build(&matches);
         }
