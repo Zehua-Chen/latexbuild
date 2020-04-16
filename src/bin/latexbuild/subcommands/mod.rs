@@ -34,6 +34,4 @@ pub fn build(matches: &ArgMatches) {
     latexbuild.build();
 }
 
-pub fn generate(matches: &ArgMatches) {
-    
-}
+pub fn generate(matches: &ArgMatches) {}

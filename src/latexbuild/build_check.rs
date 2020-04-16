@@ -1,42 +1,8 @@
 use super::Project;
-use std::fs::{metadata, read, read_dir};
-use std::io::Error;
-use std::path::PathBuf;
-use std::time::SystemTime;
-
-/// Check if a rebuild is needed
-///
-/// # Arguments
-/// - `modified`; the time at which the depended file is modified
-/// - `includes`: the next level of dependencies
-///
-/// # Returns
-///
-/// Return `Ok(true)` if a rebuild is needed, `Ok(false)` if not needed
-fn needs_build(modified: &SystemTime, deps: &Vec<PathBuf>) -> Result<bool, Error> {
-    for dep in deps {
-        if dep.is_dir() {
-            let dir = read_dir(dep).unwrap();
-            let mut children: Vec<PathBuf> = Vec::new();
-
-            for entry_result in dir {
-                children.push(entry_result?.path());
-            }
-
-            if needs_build(modified, &children)? {
-                return Ok(true);
-            }
-        } else {
-            let dep_modified = dep.metadata()?.modified()?;
-
-            if modified <= &dep_modified {
-                return Ok(true);
-            }
-        }
-    }
-
-    return Ok(false);
-}
+use std::fs::{metadata, read};
+// use std::io::Error;
+// use std::path::PathBuf;
+// use std::time::SystemTime;
 
 /// An object that determine if a build is still needed
 ///
@@ -85,17 +51,17 @@ impl<'a> NeedsBuildChecker<'a> {
                 // if pdf exists, check to see of sources are newer than pdf
                 // if yes, rebuild
                 Ok(metadata) => {
-                    let mut deps: Vec<PathBuf> = Vec::new();
+                    let pdf_modified = metadata.modified().unwrap();
 
-                    deps.push(PathBuf::from(self.project.entry()));
+                    for file in self.project.files() {
+                        let file_modified = file.metadata().unwrap().modified().unwrap();
 
-                    for include in self.project.includes() {
-                        deps.push(include.clone());
+                        if pdf_modified < file_modified {
+                            return true;
+                        }
                     }
 
-                    let modified = metadata.modified().unwrap();
-
-                    return needs_build(&modified, &deps).unwrap();
+                    return false;
                 }
                 // if pdf does not exist, rebuild
                 Err(_) => {
