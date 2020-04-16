@@ -33,3 +33,7 @@ pub fn build(matches: &ArgMatches) {
 
     latexbuild.build();
 }
+
+pub fn generate(matches: &ArgMatches) {
+    
+}

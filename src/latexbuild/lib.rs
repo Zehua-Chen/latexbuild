@@ -13,6 +13,8 @@ pub use build::*;
 use std::fs::remove_dir_all;
 use std::path::PathBuf;
 
+mod includes;
+
 /// Wrapper for the build pipeline
 pub struct LatexBuild<'a, L>
 where
