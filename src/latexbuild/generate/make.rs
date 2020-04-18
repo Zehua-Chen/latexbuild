@@ -52,7 +52,7 @@ impl Generate for Makefile {
                 Some(dep) => {
                     dep.generate(writer)?;
                 }
-                _ => {},
+                _ => {}
             }
 
             for dep in dep_iter {
@@ -92,14 +92,15 @@ impl From<Project> for Makefile {
                 "{} -output-directory={} {}",
                 project.latex().to_str().unwrap(),
                 project.bin().to_str().unwrap(),
-                project.entry().to_str().unwrap()),
+                project.entry().to_str().unwrap()
+            ),
             dependencies: dependencies,
         });
 
         makefile.targets.push(MakeTarget {
             target: String::from(project.bin().to_str().unwrap()),
             command: format!("mkdir {}", project.bin().to_str().unwrap()),
-            dependencies: Vec::new()
+            dependencies: Vec::new(),
         });
 
         return makefile;

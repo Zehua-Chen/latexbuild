@@ -41,7 +41,7 @@ where
         let mut root_path = self.config_path.clone();
         root_path.pop();
 
-        let mut project = Project::load(&self.config_path).unwrap();
+        let mut project = Project::load(&self.config_path)?;
         project.use_root_path(&root_path);
 
         return Ok(project);
@@ -91,7 +91,7 @@ where
     }
 
     pub fn generate_make(&mut self) -> Result<(), Error> {
-        let project = Project::load(&self.config_path).unwrap();
+        let project = Project::load(&self.config_path)?;
         let makefile = generate::Makefile::from(project);
 
         let mut file = self.config_path.clone();

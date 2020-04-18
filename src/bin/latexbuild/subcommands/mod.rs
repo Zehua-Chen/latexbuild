@@ -14,7 +14,7 @@ pub fn clean(matches: &ArgMatches) {
     match latexbuild.clean() {
         Err(error) => {
             logger.error(format!("{}", error));
-        },
+        }
         _ => {}
     }
 }
@@ -39,7 +39,7 @@ pub fn build(matches: &ArgMatches) {
     match latexbuild.build() {
         Err(error) => {
             logger.error(format!("{}", error));
-        },
+        }
         _ => {}
     }
 }
