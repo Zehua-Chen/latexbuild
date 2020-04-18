@@ -1,3 +1,6 @@
+mod error;
+pub use error::*;
+
 mod log;
 pub use log::*;
 
@@ -34,25 +37,25 @@ where
 {
     /// Load a project and call `use_root_path` on it. In another word,
     /// load a project and make all the paths absolute
-    pub fn load_project(&self) -> Project {
+    pub fn load_project(&self) -> Result<Project, Error> {
         let mut root_path = self.config_path.clone();
         root_path.pop();
 
         let mut project = Project::load(&self.config_path).unwrap();
         project.use_root_path(&root_path);
 
-        return project;
+        return Ok(project);
     }
 
     /// Run the build pipeline
-    pub fn build(&mut self) {
-        let project = self.load_project();
+    pub fn build(&mut self) -> Result<(), Error> {
+        let project = self.load_project()?;
 
         match project.can_build() {
             Err(error) => match error {
                 ProjectBuildError::NoEntry => {
                     self.logger.error("no entry file");
-                    return;
+                    return Ok(());
                 }
             },
             _ => {}
@@ -68,10 +71,12 @@ where
                 break;
             }
         }
+
+        return Ok(());
     }
 
-    pub fn clean(&mut self) {
-        let project = self.load_project();
+    pub fn clean(&mut self) -> Result<(), Error> {
+        let project = self.load_project()?;
         self.logger.message("cleaning bin directory");
 
         match remove_dir_all(project.bin()) {
@@ -81,9 +86,11 @@ where
                 self.logger.error(&message);
             }
         }
+
+        return Ok(());
     }
 
-    pub fn generate_make(&mut self) {
+    pub fn generate_make(&mut self) -> Result<(), Error> {
         let project = Project::load(&self.config_path).unwrap();
         let makefile = generate::Makefile::from(project);
 
@@ -95,5 +102,7 @@ where
         let mut file_writer = BufWriter::new(file);
 
         makefile.generate(&mut file_writer).unwrap();
+
+        return Ok(());
     }
 }
