@@ -63,7 +63,7 @@ where
 
         let mut needs_build_checker = NeedsBuildChecker::new(&project);
 
-        while needs_build_checker.needs_build() {
+        while needs_build_checker.needs_build()? {
             self.logger.message("building project");
 
             if !project.build(self.logger).unwrap() {
