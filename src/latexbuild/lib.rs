@@ -14,7 +14,7 @@ mod build;
 pub use build::*;
 
 mod generate;
-use generate::Generate;
+use generate::*;
 
 use std::fs::{remove_dir_all, File};
 use std::io::BufWriter;
@@ -53,10 +53,11 @@ where
 
         match project.can_build() {
             Err(error) => match error {
-                ProjectBuildError::NoEntry => {
+                Error::NoEntry => {
                     self.logger.error("no entry file");
                     return Ok(());
                 }
+                _ => {}
             },
             _ => {}
         }
@@ -66,7 +67,7 @@ where
         while needs_build_checker.needs_build()? {
             self.logger.message("building project");
 
-            if !project.build(self.logger).unwrap() {
+            if !project.build(self.logger)? {
                 self.logger.error("build stopped due to error");
                 break;
             }
@@ -91,8 +92,7 @@ where
     }
 
     pub fn generate_make(&mut self) -> Result<(), Error> {
-        let project = Project::load(&self.config_path)?;
-        let makefile = generate::Makefile::from(project);
+        let makefile = Project::load(&self.config_path)?.to_make()?;
 
         let mut file = self.config_path.clone();
         file.pop();
@@ -101,7 +101,7 @@ where
         let file = File::create(file).unwrap();
         let mut file_writer = BufWriter::new(file);
 
-        makefile.generate(&mut file_writer).unwrap();
+        makefile.generate(&mut file_writer)?;
 
         return Ok(());
     }

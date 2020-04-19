@@ -1,11 +1,7 @@
+use super::Error;
 use super::{Logger, Project};
 use std::fs::create_dir;
-use std::io;
 use std::process::Command;
-
-pub enum ProjectBuildError {
-    NoEntry,
-}
 
 impl Project {
     /// Build a project
@@ -13,24 +9,42 @@ impl Project {
     /// # Arguments
     ///
     /// - `logger`: the logger
-    pub fn build<L: Logger>(&self, logger: &mut L) -> io::Result<bool> {
+    pub fn build<L: Logger>(&self, logger: &mut L) -> Result<bool, Error> {
         if !self.bin().exists() {
             logger.message("creating bin directory");
-            create_dir(self.bin())?;
+
+            match create_dir(self.bin()) {
+                Err(error) => return Err(Error::IO(error)),
+                _ => {}
+            }
         }
 
-        let output_dir_arg = format!("-output-directory={}", self.bin().to_str().unwrap());
+        let bin = match self.bin().to_str() {
+            Some(s) => s,
+            None => return Err(Error::Encoding),
+        };
 
-        logger.run_command(
-            self.latex(),
-            &[&output_dir_arg, self.entry().to_str().unwrap()],
-        );
+        let output_dir_arg = format!("-output-directory={}", bin);
 
-        let command_output = Command::new(self.latex())
-            .args(&[&output_dir_arg, self.entry().to_str().unwrap()])
-            .output()?;
+        let entry = match self.entry().to_str() {
+            Some(s) => s,
+            None => return Err(Error::Encoding),
+        };
 
-        let command_output_str = String::from_utf8(command_output.stdout).unwrap();
+        logger.run_command(self.latex(), &[&output_dir_arg, entry]);
+
+        let command_output = match Command::new(self.latex())
+            .args(&[&output_dir_arg, entry])
+            .output()
+        {
+            Ok(output) => output,
+            Err(error) => return Err(Error::IO(error)),
+        };
+
+        let command_output_str = match String::from_utf8(command_output.stdout) {
+            Ok(s) => s,
+            Err(_error) => return Err(Error::Encoding),
+        };
 
         logger.command_output(&command_output_str);
 
@@ -44,9 +58,9 @@ impl Project {
     ///
     /// - `Ok(())` if buildable
     /// - `Err(ProjectBuildError)` if not
-    pub fn can_build(&self) -> Result<(), ProjectBuildError> {
+    pub fn can_build(&self) -> Result<(), Error> {
         if !self.entry().exists() {
-            return Err(ProjectBuildError::NoEntry);
+            return Err(Error::NoEntry);
         }
 
         return Ok(());

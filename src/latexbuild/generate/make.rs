@@ -1,7 +1,8 @@
 use super::super::Project;
+use super::Error;
 use super::Generate;
 use std::fs::File;
-use std::io::{self, BufWriter, Write};
+use std::io::{BufWriter, Write};
 
 pub enum MakeDependency {
     Regular(String),
@@ -9,14 +10,16 @@ pub enum MakeDependency {
 }
 
 impl Generate for MakeDependency {
-    fn generate(&self, writer: &mut BufWriter<File>) -> io::Result<()> {
+    fn generate(&self, writer: &mut BufWriter<File>) -> Result<(), Error> {
         match self {
-            MakeDependency::Regular(ref d) => {
-                write!(writer, "{}", d)?;
-            }
-            MakeDependency::OrderOnly(ref d) => {
-                write!(writer, "| {}", d)?;
-            }
+            MakeDependency::Regular(ref d) => match write!(writer, "{}", d) {
+                Err(error) => return Err(Error::IO(error)),
+                _ => {}
+            },
+            MakeDependency::OrderOnly(ref d) => match write!(writer, "| {}", d) {
+                Err(error) => return Err(Error::IO(error)),
+                _ => {}
+            },
         }
 
         return Ok(());
@@ -42,9 +45,12 @@ impl Makefile {
 }
 
 impl Generate for Makefile {
-    fn generate(&self, writer: &mut BufWriter<File>) -> io::Result<()> {
+    fn generate(&self, writer: &mut BufWriter<File>) -> Result<(), Error> {
         for target in &self.targets {
-            write!(writer, "{}: ", target.target)?;
+            match write!(writer, "{}: ", target.target) {
+                Err(error) => return Err(Error::IO(error)),
+                _ => {}
+            }
 
             let mut dep_iter = target.dependencies.iter();
 
@@ -56,53 +62,88 @@ impl Generate for Makefile {
             }
 
             for dep in dep_iter {
-                write!(writer, " ")?;
+                match write!(writer, " ") {
+                    Err(error) => return Err(Error::IO(error)),
+                    _ => {}
+                }
+
                 dep.generate(writer)?;
             }
 
-            writeln!(writer)?;
-            write!(writer, "\t")?;
+            match writeln!(writer) {
+                Err(error) => return Err(Error::IO(error)),
+                _ => {}
+            }
 
-            writeln!(writer, "{}", target.command)?;
+            match write!(writer, "\t") {
+                Err(error) => return Err(Error::IO(error)),
+                _ => {}
+            }
+
+            match writeln!(writer, "{}", target.command) {
+                Err(error) => return Err(Error::IO(error)),
+                _ => {}
+            }
         }
 
         return Ok(());
     }
 }
 
-impl From<Project> for Makefile {
-    fn from(project: Project) -> Makefile {
+impl Project {
+    pub fn to_make(&self) -> Result<Makefile, Error> {
         let mut dependencies: Vec<MakeDependency> = Vec::new();
 
-        for file in project.files() {
-            dependencies.push(MakeDependency::Regular(String::from(
-                file.to_str().unwrap(),
-            )));
+        for file in self.files() {
+            match file.to_str() {
+                Some(file) => {
+                    dependencies.push(MakeDependency::Regular(String::from(file)));
+                }
+                _ => {}
+            }
         }
 
-        dependencies.push(MakeDependency::OrderOnly(String::from(
-            project.bin().to_str().unwrap(),
-        )));
+        let project = match self.bin().to_str() {
+            Some(project) => project,
+            _ => return Err(Error::Encoding),
+        };
+
+        dependencies.push(MakeDependency::OrderOnly(String::from(project)));
 
         let mut makefile = Makefile::new();
 
+        let latex = match self.latex().to_str() {
+            Some(latex) => latex,
+            _ => return Err(Error::Encoding),
+        };
+
+        let bin = match self.bin().to_str() {
+            Some(bin) => bin,
+            _ => return Err(Error::Encoding),
+        };
+
+        let pdf = match self.pdf().to_str() {
+            Some(pdf) => pdf,
+            _ => return Err(Error::Encoding),
+        };
+
+        let entry = match self.entry().to_str() {
+            Some(entry) => entry,
+            _ => return Err(Error::Encoding),
+        };
+
         makefile.targets.push(MakeTarget {
-            target: String::from(project.pdf().to_str().unwrap()),
-            command: format!(
-                "{} -output-directory={} {}",
-                project.latex().to_str().unwrap(),
-                project.bin().to_str().unwrap(),
-                project.entry().to_str().unwrap()
-            ),
+            target: String::from(pdf),
+            command: format!("{} -output-directory={} {}", latex, bin, entry),
             dependencies: dependencies,
         });
 
         makefile.targets.push(MakeTarget {
-            target: String::from(project.bin().to_str().unwrap()),
-            command: format!("mkdir {}", project.bin().to_str().unwrap()),
+            target: String::from(bin),
+            command: format!("mkdir {}", bin),
             dependencies: Vec::new(),
         });
 
-        return makefile;
+        return Ok(makefile);
     }
 }

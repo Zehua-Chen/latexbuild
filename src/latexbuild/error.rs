@@ -8,6 +8,7 @@ pub enum Error {
     IO(io::Error),
     JsonParsing(json::Error),
     WrongConfigFormat(String),
+    NoEntry,
     Encoding,
 }
 
@@ -37,6 +38,9 @@ impl Display for Error {
             }
             Error::WrongConfigFormat(message) => {
                 write!(f, "{}", message)?;
+            }
+            Error::NoEntry => {
+                write!(f, "no entry specified")?;
             }
         }
 
