@@ -10,20 +10,20 @@
 
 ## Commands
 
-```
-latexbuild
-```
+- Build if needed
 
-Create a build
+  ```
+  latexbuild
+  ```
 
-```
-latexbuild new <name>
-```
+- Create a new project
 
-Create a new project
+  ```
+  latexbuild new <name>
+  ```
 
-```
-latexbuild clean
-```
+- Clean existing build
 
-Remove the `bin` folder
+  ```
+  latexbuild clean
+  ```
