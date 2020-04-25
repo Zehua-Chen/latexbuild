@@ -18,7 +18,7 @@ fn resolve_includes(includes: Vec<PathBuf>) -> Result<Vec<PathBuf>, Error> {
     }
 
     while let Some(dir) = to_explore.pop() {
-        match read_dir(dir) {
+        match read_dir(&dir) {
             Ok(dir) => {
                 for dir_item in dir {
                     match dir_item {
@@ -35,7 +35,7 @@ fn resolve_includes(includes: Vec<PathBuf>) -> Result<Vec<PathBuf>, Error> {
                     }
                 }
             }
-            Err(_) => {}
+            Err(_) => return Err(Error::PathNotFound(dir)),
         }
     }
 

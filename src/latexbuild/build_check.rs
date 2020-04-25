@@ -1,6 +1,7 @@
 use super::Error;
 use super::Project;
 use std::fs::{metadata, read};
+use std::path::PathBuf;
 
 /// An object that determine if a build is still needed
 ///
@@ -59,7 +60,7 @@ impl<'a> NeedsBuildChecker<'a> {
                                 Ok(modified) => modified,
                                 Err(error) => return Err(Error::IO(error)),
                             },
-                            Err(error) => return Err(Error::IO(error)),
+                            Err(_error) => return Err(Error::PathNotFound(PathBuf::from(file))),
                         };
 
                         if pdf_modified < file_modified {
