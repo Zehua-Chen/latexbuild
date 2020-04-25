@@ -14,7 +14,7 @@ const ENTRY_STR: &'static str = "\\documentclass{article}
 
 fn main() {
     let matches = App::new("latexbuild")
-        .version("0.1")
+        .version("0.3")
         .author("Zehua Chen peterchen06242000@outlook.com")
         .about("A tool to build latex projects")
         .args(&[Arg::with_name("config")

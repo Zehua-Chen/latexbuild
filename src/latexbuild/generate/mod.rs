@@ -1,10 +1,11 @@
+use super::Error;
 use std::fs::File;
-use std::io::{BufWriter, Result};
+use std::io::BufWriter;
 
 mod make;
 
 pub use make::*;
 
 pub trait Generate {
-    fn generate(&self, writer: &mut BufWriter<File>) -> Result<()>;
+    fn generate(&self, writer: &mut BufWriter<File>) -> Result<(), Error>;
 }

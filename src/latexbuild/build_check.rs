@@ -1,8 +1,7 @@
+use super::Error;
 use super::Project;
 use std::fs::{metadata, read};
-// use std::io::Error;
-// use std::path::PathBuf;
-// use std::time::SystemTime;
+use std::path::PathBuf;
 
 /// An object that determine if a build is still needed
 ///
@@ -42,30 +41,38 @@ impl<'a> NeedsBuildChecker<'a> {
     /// # Returns
     ///
     /// `true` is a build is needed
-    pub fn needs_build(&mut self) -> bool {
+    pub fn needs_build(&mut self) -> Result<bool, Error> {
         if !self.has_checked_sources {
             self.has_checked_sources = true;
-            let pdf_metadata = metadata(self.project.pdf());
 
-            match pdf_metadata {
+            match metadata(self.project.pdf()) {
                 // if pdf exists, check to see of sources are newer than pdf
                 // if yes, rebuild
                 Ok(metadata) => {
-                    let pdf_modified = metadata.modified().unwrap();
+                    let pdf_modified = match metadata.modified() {
+                        Ok(modified) => modified,
+                        Err(error) => return Err(Error::IO(error)),
+                    };
 
                     for file in self.project.files() {
-                        let file_modified = file.metadata().unwrap().modified().unwrap();
+                        let file_modified = match file.metadata() {
+                            Ok(meta) => match meta.modified() {
+                                Ok(modified) => modified,
+                                Err(error) => return Err(Error::IO(error)),
+                            },
+                            Err(_error) => return Err(Error::PathNotFound(PathBuf::from(file))),
+                        };
 
                         if pdf_modified < file_modified {
-                            return true;
+                            return Ok(true);
                         }
                     }
 
-                    return false;
+                    return Ok(false);
                 }
                 // if pdf does not exist, rebuild
                 Err(_) => {
-                    return true;
+                    return Ok(true);
                 }
             };
         }
@@ -80,19 +87,20 @@ impl<'a> NeedsBuildChecker<'a> {
                         // Cannot open the new aux file, so return false
                         // to be safe
                         Err(_) => {
-                            return false;
+                            return Ok(false);
                         }
-                        Ok(ref new_aux) => return !(new_aux == old_aux),
+                        Ok(ref new_aux) => return Ok(!(new_aux == old_aux)),
                     }
                 }
                 // we did not originally have a aux file, it means the project
-                // has never been built, therefore, needs a build
+                // has just been built for the first time, therefore, needs a
+                // build
                 None => {
-                    return true;
+                    return Ok(true);
                 }
             }
         }
 
-        return false;
+        return Ok(false);
     }
 }

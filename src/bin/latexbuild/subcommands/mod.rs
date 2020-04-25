@@ -11,7 +11,12 @@ pub fn clean(matches: &ArgMatches) {
         logger: &mut logger,
     };
 
-    latexbuild.clean();
+    match latexbuild.clean() {
+        Err(error) => {
+            logger.error(format!("{}", error));
+        }
+        _ => {}
+    }
 }
 
 // pub fn generate(matches: &ArgMatches) {
@@ -31,7 +36,12 @@ pub fn build(matches: &ArgMatches) {
         logger: &mut logger,
     };
 
-    latexbuild.build();
+    match latexbuild.build() {
+        Err(error) => {
+            logger.error(format!("{}", error));
+        }
+        _ => {}
+    }
 }
 
 pub fn generate(matches: &ArgMatches) {
@@ -41,5 +51,10 @@ pub fn generate(matches: &ArgMatches) {
         logger: &mut logger,
     };
 
-    latexbuild.generate_make();
+    match latexbuild.generate_make() {
+        Err(error) => {
+            logger.error(format!("{}", error));
+        }
+        _ => {}
+    }
 }

@@ -3,8 +3,10 @@ name = "latexbuild"
 version = "0.2.0"
 authors = ["Zehua-Chen <peterchen06242000@outlook.com>"]
 edition = "2018"
-description = "Tool to build latex documents"
-license-file = "MIT"
+description = "Command line tool to manage includes and perform automatic rebuilds of latex projects"
+readme = "README.md"
+keywords = ["latex", "build"]
+license = "MIT"
 repository = "https://github.com/Zehua-Chen/latexbuild.git"
 
 [[bin]]

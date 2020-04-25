@@ -1,14 +1,11 @@
+use super::Error;
 use json::object::Object;
 use json::{parse, JsonValue};
 use std::ffi::{OsStr, OsString};
-use std::fmt;
-use std::fmt::{Debug, Formatter};
 use std::fs::{read, read_dir};
-use std::io;
 use std::path::{Path, PathBuf};
-use std::string;
 
-fn resolve_includes(includes: Vec<PathBuf>) -> Vec<PathBuf> {
+fn resolve_includes(includes: Vec<PathBuf>) -> Result<Vec<PathBuf>, Error> {
     let mut files: Vec<PathBuf> = Vec::new();
     let mut to_explore: Vec<PathBuf> = Vec::new();
 
@@ -20,22 +17,29 @@ fn resolve_includes(includes: Vec<PathBuf>) -> Vec<PathBuf> {
         }
     }
 
-    while !to_explore.is_empty() {
-        let dir = to_explore.pop().unwrap();
+    while let Some(dir) = to_explore.pop() {
+        match read_dir(&dir) {
+            Ok(dir) => {
+                for dir_item in dir {
+                    match dir_item {
+                        Ok(dir_item) => {
+                            let dir_item = dir_item.path();
 
-        for dir_item in read_dir(dir).unwrap() {
-            let dir_item = dir_item.unwrap().path();
-
-            if dir_item.is_dir() {
-                to_explore.push(dir_item);
-                continue;
+                            if dir_item.is_dir() {
+                                to_explore.push(dir_item);
+                            } else {
+                                files.push(dir_item);
+                            }
+                        }
+                        Err(error) => return Err(Error::IO(error)),
+                    }
+                }
             }
-
-            files.push(dir_item);
+            Err(_) => return Err(Error::PathNotFound(dir)),
         }
     }
 
-    return files;
+    return Ok(files);
 }
 
 /// A project loaded from disk
@@ -65,51 +69,6 @@ pub struct Project {
     entry: PathBuf,
     /// The include files and directories
     files: Vec<PathBuf>,
-}
-
-/// Error from loading projects
-pub enum ProjectLoadError {
-    /// Something wrong with the format
-    FormatError,
-    /// Something wrong with the parser
-    ParserError(json::Error),
-    /// Something wrong with IO
-    IOError(io::Error),
-    /// Something wrong with UTF8 conversion
-    FromUtf8Error(string::FromUtf8Error),
-}
-
-impl From<json::Error> for ProjectLoadError {
-    fn from(error: json::Error) -> ProjectLoadError {
-        ProjectLoadError::ParserError(error)
-    }
-}
-
-impl From<io::Error> for ProjectLoadError {
-    fn from(error: io::Error) -> ProjectLoadError {
-        ProjectLoadError::IOError(error)
-    }
-}
-
-impl From<string::FromUtf8Error> for ProjectLoadError {
-    fn from(error: string::FromUtf8Error) -> ProjectLoadError {
-        ProjectLoadError::FromUtf8Error(error)
-    }
-}
-
-impl Debug for ProjectLoadError {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        match self {
-            ProjectLoadError::FormatError => {
-                f.write_str("format error")?;
-            }
-            _ => {
-                f.write_str("other error")?;
-            }
-        }
-
-        return Ok(());
-    }
 }
 
 fn with_prepend(path: &PathBuf, prepend: &Path) -> PathBuf {
@@ -146,16 +105,19 @@ impl Project {
     /// # Arguments
     ///
     /// - `path`: the path to the json
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Project, ProjectLoadError> {
+    pub fn load<P: AsRef<Path>>(path: &P) -> Result<Project, Error> {
         let mut project = Project::new();
         let file_content: String;
 
         match read(path) {
             Ok(raw_content) => {
-                file_content = String::from_utf8(raw_content)?;
+                file_content = match String::from_utf8(raw_content) {
+                    Ok(s) => s,
+                    Err(_) => return Err(Error::Encoding),
+                };
             }
             Err(_) => {
-                return Ok(project);
+                return Err(Error::PathNotFound(PathBuf::from(path.as_ref())));
             }
         }
 
@@ -163,7 +125,10 @@ impl Project {
             return Ok(project);
         }
 
-        let parsed = parse(&file_content)?;
+        let parsed = match parse(&file_content) {
+            Ok(json_value) => json_value,
+            Err(error) => return Err(Error::JsonParsing(error)),
+        };
 
         return match parsed {
             JsonValue::Object(object) => {
@@ -177,7 +142,9 @@ impl Project {
                             project.latex = OsString::from(latex_str);
                         }
                         _ => {
-                            return Err(ProjectLoadError::FormatError);
+                            return Err(Error::WrongConfigFormat(String::from(
+                                "\"latex\" should be a string",
+                            )));
                         }
                     },
                     _ => {}
@@ -193,7 +160,9 @@ impl Project {
                             project.bin = PathBuf::from(bin_str);
                         }
                         _ => {
-                            return Err(ProjectLoadError::FormatError);
+                            return Err(Error::WrongConfigFormat(String::from(
+                                "\"bin\" should be a string",
+                            )));
                         }
                     },
                     _ => {}
@@ -209,7 +178,9 @@ impl Project {
                             project.entry = PathBuf::from(entry_str);
                         }
                         _ => {
-                            return Err(ProjectLoadError::FormatError);
+                            return Err(Error::WrongConfigFormat(String::from(
+                                "\"entry\" should be a string",
+                            )));
                         }
                     },
                     _ => {}
@@ -239,24 +210,28 @@ impl Project {
                                         project.files.push(PathBuf::from(include_str));
                                     }
                                     _ => {
-                                        return Err(ProjectLoadError::FormatError);
+                                        return Err(Error::WrongConfigFormat(String::from(
+                                            "items in \"includes\" strings",
+                                        )));
                                     }
                                 }
                             }
                         }
                         _ => {
-                            return Err(ProjectLoadError::FormatError);
+                            return Err(Error::WrongConfigFormat(String::from(
+                                "\"includes\" should be an array",
+                            )));
                         }
                     },
                     _ => {}
                 }
 
                 project.files.push(PathBuf::from("index.tex"));
-                project.files = resolve_includes(project.files);
+                project.files = resolve_includes(project.files)?;
 
                 Ok(project)
             }
-            _ => Err(ProjectLoadError::FormatError),
+            _ => Err(Error::WrongConfigFormat(String::from("expecting object"))),
         };
     }
 
@@ -315,23 +290,45 @@ impl Project {
 
 impl Into<JsonValue> for Project {
     fn into(self) -> JsonValue {
-        let default = Project::new();
         let mut object = Object::new();
 
-        object.insert(
-            "latex",
-            JsonValue::String(String::from(default.latex().to_str().unwrap())),
-        );
-        object.insert(
-            "bin",
-            JsonValue::String(String::from(default.bin().to_str().unwrap())),
-        );
-        object.insert(
-            "entry",
-            JsonValue::String(String::from(default.entry().to_str().unwrap())),
-        );
+        match self.latex.to_str() {
+            Some(s) => {
+                object.insert("latex", JsonValue::String(String::from(s)));
+            }
+            None => {
+                object.insert("latex", JsonValue::String(String::from("pdflatex")));
+            }
+        }
 
-        object.insert("includes", JsonValue::new_array());
+        match self.bin.to_str() {
+            Some(s) => {
+                object.insert("bin", JsonValue::String(String::from(s)));
+            }
+            None => {
+                object.insert("bin", JsonValue::String(String::from("bin")));
+            }
+        }
+
+        match self.entry.to_str() {
+            Some(s) => {
+                object.insert("entry", JsonValue::String(String::from(s)));
+            }
+            None => {
+                object.insert("entry", JsonValue::String(String::from("index.tex")));
+            }
+        }
+
+        let mut includes: Vec<JsonValue> = Vec::new();
+
+        for file in self.files {
+            match file.to_str() {
+                Some(s) => includes.push(JsonValue::String(String::from(s))),
+                _ => {}
+            }
+        }
+
+        object.insert("includes", JsonValue::Array(includes));
 
         return JsonValue::Object(object);
     }
