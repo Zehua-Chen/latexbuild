@@ -57,12 +57,21 @@ impl Logger for StdErrLogger {
         S: AsRef<OsStr>,
     {
         let mut raw_output = String::new();
+        let s = match command.as_ref().to_str() {
+            Some(s) => s,
+            _ => return,
+        };
 
-        raw_output.push_str(command.as_ref().to_str().unwrap());
+        raw_output.push_str(s);
         raw_output.push(' ');
 
         for arg in args {
-            raw_output.push_str(arg.as_ref().to_str().unwrap());
+            let s = match arg.as_ref().to_str() {
+                Some(s) => s,
+                _ => return,
+            };
+
+            raw_output.push_str(s);
             raw_output.push(' ');
         }
 

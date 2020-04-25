@@ -98,7 +98,11 @@ where
         file.pop();
         file.push("Makefile");
 
-        let file = File::create(file).unwrap();
+        let file = match File::create(file) {
+            Ok(file) => file,
+            Err(error) => return Err(Error::IO(error)),
+        };
+
         let mut file_writer = BufWriter::new(file);
 
         makefile.generate(&mut file_writer)?;
