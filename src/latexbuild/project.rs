@@ -226,7 +226,7 @@ impl Project {
                     _ => {}
                 }
 
-                project.files.push(PathBuf::from("index.tex"));
+                project.files.push(project.entry.clone());
                 project.files = resolve_includes(project.files)?;
 
                 Ok(project)
