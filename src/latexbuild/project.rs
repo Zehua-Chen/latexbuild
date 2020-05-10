@@ -106,7 +106,15 @@ impl Project {
     ///
     /// - `path`: the path to the json
     pub fn load<P: AsRef<Path>>(path: &P) -> Result<Project, Error> {
-        let mut project = Project::new();
+        let mut project = Project {
+            latex: OsString::new(),
+            bin: PathBuf::new(),
+            pdf: PathBuf::new(),
+            aux: PathBuf::new(),
+            entry: PathBuf::new(),
+            files: Vec::new(),
+        };
+
         let file_content: String;
 
         match read(path) {
@@ -147,7 +155,9 @@ impl Project {
                             )));
                         }
                     },
-                    _ => {}
+                    _ => {
+                        project.latex = OsString::from("pdflatex");
+                    }
                 }
 
                 // bin
@@ -165,7 +175,9 @@ impl Project {
                             )));
                         }
                     },
-                    _ => {}
+                    _ => {
+                        project.bin = PathBuf::from("bin");
+                    }
                 }
 
                 // entry
@@ -183,7 +195,9 @@ impl Project {
                             )));
                         }
                     },
-                    _ => {}
+                    _ => {
+                        project.entry = PathBuf::from("index.tex");
+                    }
                 }
 
                 // After getting entry, resolve
