@@ -1,6 +1,6 @@
 [package]
 name = "latexbuild"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Zehua-Chen <peterchen06242000@outlook.com>"]
 edition = "2018"
 description = "Command line tool to manage includes and perform automatic rebuilds of latex projects"
