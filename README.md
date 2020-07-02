@@ -1,5 +1,7 @@
 # `latexbuild`
 
+This package has been discontinued in favor of [latextools](https://github.com/Zehua-Chen/latextools)
+
 ## Features
 
 - Smart rebuild:
